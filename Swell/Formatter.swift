@@ -140,7 +140,7 @@ public class FlexFormatter: LogFormatter {
     public func formatLog<T>(logger: Logger, level: LogLevel, @autoclosure message givenMessage: () -> T,
                              filename: String?, line: Int?,  function: String?) -> String {
         var logMessage = ""
-        for (index, part) in enumerate(format) {
+        for (index, part) in format.enumerate() {
             switch part {
             case .MESSAGE:
                 let message = givenMessage()
@@ -150,7 +150,7 @@ public class FlexFormatter: LogFormatter {
             case .DATE: logMessage += NSDate().description
             case .LINE:
                 if (filename != nil) && (line != nil) {
-                    logMessage += "[\(filename!.lastPathComponent):\(line!)]"
+                    logMessage += "[\((filename! as NSString).lastPathComponent):\(line!)]"
                 }
             case .FUNC:
                 if (function != nil) {
@@ -187,7 +187,7 @@ public class FlexFormatter: LogFormatter {
 
     public func description() -> String {
         var desc = ""
-        for (index, part) in enumerate(format) {
+        for (index, part) in format.enumerate() {
             switch part {
             case .MESSAGE: desc += "MESSAGE"
             case .NAME: desc += "NAME"
