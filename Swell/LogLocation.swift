@@ -9,7 +9,7 @@ import Foundation
 
 public protocol LogLocation {
     //class func getInstance(param: AnyObject? = nil) -> LogLocation
-
+    
     func log(@autoclosure message: () -> String);
     
     func enable();
@@ -31,14 +31,14 @@ public class ConsoleLocation: LogLocation {
         }
         return Static.internalInstance
     }
-
+    
     public class func getInstance() -> LogLocation {
         return instance
     }
-
+    
     public func log(@autoclosure message: () -> String) {
         if enabled {
-            print(message())
+            println(message())
         }
     }
     
@@ -64,7 +64,7 @@ public class FileLocation: LogLocation {
     var fileHandle: NSFileHandle?
     
     public class func getInstance(filename: String) -> LogLocation {
-        let temp = internalFileLocationDictionary[filename]
+        var temp = internalFileLocationDictionary[filename]
         if let result = temp {
             return result
         } else {
@@ -74,7 +74,7 @@ public class FileLocation: LogLocation {
         }
     }
     
-
+    
     init(filename: String) {
         self.filename = filename
         self.setDirectory()
@@ -99,7 +99,7 @@ public class FileLocation: LogLocation {
                 handle.writeData(data)
             }
         }
-
+        
     }
     
     func setDirectory() {
@@ -107,18 +107,18 @@ public class FileLocation: LogLocation {
         if temp.rangeOfString("/").location != Foundation.NSNotFound {
             // "/" was found in the filename, so we use whatever path is already there
             if (self.filename.hasPrefix("~/")) {
-                self.filename = (self.filename as NSString).stringByExpandingTildeInPath
+                self.filename = self.filename.stringByExpandingTildeInPath
             }
             
             return
         }
-
+        
         //let dirs : [String]? = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .AllDomainsMask, true) as? [String]
         let dirs:AnyObject = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0]
-    
+        
         if let dir: String = dirs as? String {
             //let dir = directories[0]; //documents directory
-            let path = (dir as NSString).stringByAppendingPathComponent(self.filename);
+            let path = dir.stringByAppendingPathComponent(self.filename);
             self.filename = path;
         }
     }

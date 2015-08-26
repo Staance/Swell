@@ -12,7 +12,7 @@ public protocol LogFormatter {
     
     /// Formats the message provided for the given logger
     func formatLog<T>(logger: Logger, level: LogLevel, @autoclosure message: () -> T,
-                      filename: String?, line: Int?,  function: String?) -> String;
+        filename: String?, line: Int?,  function: String?) -> String;
     
     /// Returns an instance of this class given a configuration string
     static func logFormatterForString(formatString: String) -> LogFormatter;
@@ -46,26 +46,26 @@ public class QuickFormatter: LogFormatter {
     }
     
     public func formatLog<T>(logger: Logger, level: LogLevel, @autoclosure message givenMessage: () -> T,
-                             filename: String?, line: Int?,  function: String?) -> String {
-        var s: String;
-        let message = givenMessage()
-        switch format {
-        case .LevelNameMessage:
-            s = "\(level.label) \(logger.name): \(message)";
-        case .DateLevelMessage:
-            s = "\(NSDate()) \(level.label): \(message)";
-        case .MessageOnly:
-            s = "\(message)";
-        case .NameMessage:
-            s = "\(logger.name): \(message)";
-        case .LevelMessage:
-            s = "\(level.label): \(message)";
-        case .DateMessage:
-            s = "\(NSDate()) \(message)";
-        case .All:
-            s = "\(NSDate()) \(level.label) \(logger.name): \(message)";
-        }
-        return s
+        filename: String?, line: Int?,  function: String?) -> String {
+            var s: String;
+            let message = givenMessage()
+            switch format {
+            case .LevelNameMessage:
+                s = "\(level.label) \(logger.name): \(message)";
+            case .DateLevelMessage:
+                s = "\(NSDate()) \(level.label): \(message)";
+            case .MessageOnly:
+                s = "\(message)";
+            case .NameMessage:
+                s = "\(logger.name): \(message)";
+            case .LevelMessage:
+                s = "\(level.label): \(message)";
+            case .DateMessage:
+                s = "\(NSDate()) \(message)";
+            case .All:
+                s = "\(NSDate()) \(level.label) \(logger.name): \(message)";
+            }
+            return s
     }
     
     public class func logFormatterForString(formatString: String) -> LogFormatter {
@@ -130,45 +130,61 @@ public class FlexFormatter: LogFormatter {
         //}
     }
     
-    /// This overload is needed (as of Beta 3) because 
+    /// This overload is needed (as of Beta 3) because
     /// passing an array to a variadic param is not yet supported
     init(parts: [FlexFormatterPart]) {
         format = parts
     }
     
-
-    public func formatLog<T>(logger: Logger, level: LogLevel, @autoclosure message givenMessage: () -> T,
-                             filename: String?, line: Int?,  function: String?) -> String {
-        var logMessage = ""
-        for (index, part) in format.enumerate() {
-            switch part {
-            case .MESSAGE:
-                let message = givenMessage()
-                logMessage += "\(message)"
-            case .NAME: logMessage += logger.name
-            case .LEVEL: logMessage += level.label
-            case .DATE: logMessage += NSDate().description
-            case .LINE:
-                if (filename != nil) && (line != nil) {
-                    logMessage += "[\((filename! as NSString).lastPathComponent):\(line!)]"
-                }
-            case .FUNC:
-                if (function != nil) {
-                    logMessage += "[\(function)()]"
-                }
-            }
-            
-            if (index < format.count-1) {
-                if (format[index+1] == .MESSAGE) {
-                    logMessage += ":"
-                }
-                logMessage += " "
-            }
+    
+    func getFunctionFormat(function: String) -> String {
+        var result = function;
+        if (result.hasPrefix("Optional(")) {
+            let len = count("Optional(")
+            let start = advance(result.startIndex, len)
+            let end = advance(result.endIndex, -len)
+            let range = start..<end
+            result = result[range]
         }
-        return logMessage
+        if (!result.hasSuffix(")")) {
+            result = result + "()"
+        }
+        return result
     }
-   
-
+    
+    public func formatLog<T>(logger: Logger, level: LogLevel, @autoclosure message givenMessage: () -> T,
+        filename: String?, line: Int?,  function: String?) -> String {
+            var logMessage = ""
+            for (index, part) in enumerate(format) {
+                switch part {
+                case .MESSAGE:
+                    let message = givenMessage()
+                    logMessage += "\(message)"
+                case .NAME: logMessage += logger.name
+                case .LEVEL: logMessage += level.label
+                case .DATE: logMessage += NSDate().description
+                case .LINE:
+                    if (filename != nil) && (line != nil) {
+                        logMessage += "[\(filename!.lastPathComponent):\(line!)]"
+                    }
+                case .FUNC:
+                    if (function != nil) {
+                        let output = getFunctionFormat(function!)
+                        logMessage += "[\(output)]"
+                    }
+                }
+                
+                if (index < format.count-1) {
+                    if (format[index+1] == .MESSAGE) {
+                        logMessage += ":"
+                    }
+                    logMessage += " "
+                }
+            }
+            return logMessage
+    }
+    
+    
     public class func logFormatterForString(formatString: String) -> LogFormatter {
         var formatSpec = [FlexFormatterPart]()
         let parts = formatString.uppercaseString.componentsSeparatedByCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
@@ -184,10 +200,10 @@ public class FlexFormatter: LogFormatter {
         }
         return FlexFormatter(parts: formatSpec)
     }
-
+    
     public func description() -> String {
         var desc = ""
-        for (index, part) in format.enumerate() {
+        for (index, part) in enumerate(format) {
             switch part {
             case .MESSAGE: desc += "MESSAGE"
             case .NAME: desc += "NAME"
@@ -203,6 +219,6 @@ public class FlexFormatter: LogFormatter {
         }
         return "FlexFormatter with \(desc)"
     }
- 
+    
 }
 
